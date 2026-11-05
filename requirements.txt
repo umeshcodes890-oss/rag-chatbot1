@@ -1,0 +1,22 @@
+# --- LlamaIndex framework ---
+llama-index-core>=0.14,<0.15
+llama-index-readers-file>=0.7,<0.8
+llama-index-llms-google-genai>=0.11,<0.12
+llama-index-embeddings-huggingface>=0.8,<0.9
+llama-index-vector-stores-chroma>=0.6,<0.7
+
+# --- Vector database ---
+chromadb>=1.5,<2.0
+
+# --- Local embedding runtime ---
+sentence-transformers>=6.2,<7.0
+
+# --- Web UI ---
+streamlit>=1.66,<2.0
+
+# --- Document parsers ---
+pypdf>=6.2,<7.0
+docx2txt>=0.9,<0.10
+
+# --- Configuration ---
+python-dotenv>=1.2,<2.0
