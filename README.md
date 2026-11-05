@@ -13,7 +13,7 @@ A retrieval-augmented chatbot over your own documents.
 Documents are loaded, split into overlapping chunks, embedded locally, stored in
 ChromaDB, and retrieved at question time to ground a Gemini answer with citations.
 
-> **Status:** ingestion and chunking are implemented. Embeddings, ChromaDB
+> **Status:** ingestion, chunking, and embeddings are implemented. ChromaDB
 > storage, retrieval, and Gemini generation are intentionally stubbed and raise
 > `NotImplementedError`.
 
@@ -100,7 +100,8 @@ rag-chatbot/
 ├── tests/
 │   ├── conftest.py           Builds real PDF/DOCX/TXT fixtures
 │   ├── test_ingestion.py     Cleaning, discovery, per-format loading, errors
-│   └── test_chunking.py      Geometry, token budget, overlap, metadata
+│   ├── test_chunking.py      Geometry, token budget, overlap, metadata
+│   └── test_embeddings.py    Vector shape, determinism, semantic ranking
 └── rag_chatbot/
     ├── __init__.py
     ├── ingestion.py          Find files, clean text, load them as Documents
@@ -124,9 +125,11 @@ another stage — so a module can be replaced or tested without touching the res
 pytest
 ```
 
-71 tests run offline in roughly 15 seconds. PDF and DOCX fixtures are generated
+86 tests run offline in roughly 35 seconds. PDF and DOCX fixtures are generated
 as real files rather than mocked, so `pypdf`, `docx2txt`, and the LlamaIndex
-readers are genuinely exercised.
+readers are genuinely exercised. The embedding tests load the real Sentence
+Transformers model; the first run downloads its weights once and takes about a
+minute, after which the HuggingFace cache makes it fast.
 
 `tests/test_geminiapi.py` is excluded from collection on purpose. It is a
 stand-alone script whose body calls the live Gemini API at import time, so
@@ -156,16 +159,23 @@ python tests\test_geminiapi.py
   `file_size_bytes`, `last_modified`, plus `page_number`, `page_count`, and
   `page_label` for PDFs. DOCX has no page fields because `docx2txt` discards
   pagination.
+- **Embeddings:** `embeddings.build_embed_model` returns a
+  `HuggingFaceEmbedding` for the configured model. `all-MiniLM-L6-v2` produces
+  fixed-width 384-dimensional vectors, so the Chroma collection created in the
+  next stage must match that width. A gated model needs no extra plumbing:
+  `HuggingFaceEmbedding` has no `token` argument, and `huggingface_hub` reads
+  `HF_TOKEN` straight from the environment that `config.load_settings` populates.
+  An unloadable model raises `EmbeddingModelError` with the original cause
+  chained.
 
 ## Extending
 
 Remaining stages, one at a time:
 
-1. `embeddings.py` — `HuggingFaceEmbedding`
+1. `vector_store.py` — persistent Chroma client and index
 2. `llm.py` — `GoogleGenAI`
-3. `vector_store.py` — persistent Chroma client and index
-4. `retrieval.py` — retriever plus grounded prompt
-5. `chatbot.py` and `pipeline.py` — wire it up
+3. `retrieval.py` — retriever plus grounded prompt
+4. `chatbot.py` and `pipeline.py` — wire it up
 
 ## Troubleshooting
 

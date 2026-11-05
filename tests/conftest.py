@@ -14,10 +14,14 @@ from xml.sax.saxutils import escape
 
 import pytest
 
+from config import Settings
+
 # test_geminiapi.py is a stand-alone script, not a pytest module: its body calls
-# the live Gemini API at import time, so collecting it would spend a request.
+# the live Gemini API at import time, so letting pytest import it would spend a
+# real request.
 collect_ignore = ["test_geminiapi.py"]
 
+PLACEHOLDER_API_KEY = "test-key-not-a-secret"
 DOC_PARAGRAPH = (
     "Retrieval-augmented generation grounds a language model in source documents. "
     "The retriever selects the passages that the generator must obey."
@@ -198,3 +202,46 @@ def long_prose() -> str:
         f"and returns only the closest matches to the question."
         for index in range(1, 121)
     )
+
+
+def build_settings(**overrides: object) -> Settings:
+    """Construct :class:`config.Settings` with test-safe defaults.
+
+    Tests build configuration directly instead of calling ``load_settings()``,
+    so the suite never depends on a developer's ``.env`` and every credential is
+    an obvious placeholder. Pass ``overrides`` to change one field.
+
+    Returns
+    -------
+    Settings
+        Configuration pointing at inert paths.
+    """
+    base: dict[str, object] = {
+        "gemini_api_key": PLACEHOLDER_API_KEY,
+        "gemini_model": "gemini-test-model",
+        "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+        "hf_token": None,
+        "chroma_collection": "test_collection",
+        "data_dir": Path("data"),
+        "chroma_dir": Path("vectorstore"),
+        "chunk_size": 512,
+        "chunk_overlap": 50,
+        "similarity_top_k": 3,
+    }
+    base.update(overrides)
+    return Settings(**base)  # type: ignore[arg-type]
+
+
+@pytest.fixture
+def make_settings(tmp_path: Path):
+    """Return a factory producing settings scoped to ``tmp_path``."""
+
+    def factory(**overrides: object) -> Settings:
+        defaults: dict[str, object] = {
+            "data_dir": tmp_path / "data",
+            "chroma_dir": tmp_path / "chroma",
+        }
+        defaults.update(overrides)
+        return build_settings(**defaults)
+
+    return factory
