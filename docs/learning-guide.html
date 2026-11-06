@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Chatbot — Interactive Topics Guide</title>
+<style>
+  :root {
+    --fg: #1a1f29; --muted: #5b6472; --bg: #f7f8fa; --surface: #ffffff;
+    --border: #dfe3ea; --accent: #2f6fed; --accent-soft: #e8effd;
+    --ok: #1f8a52; --ok-soft: #e4f5eb; --stub: #b25e09; --stub-soft: #fdeeda;
+    --code-bg: #0f1420; --code-fg: #e6e9ef; --quiz-soft: #f2f0ff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fg: #e6e9ef; --muted: #9aa4b2; --bg: #12151b; --surface: #1a1e26;
+      --border: #2c333f; --accent: #7ea6ff; --accent-soft: #22304a;
+      --ok: #66d198; --ok-soft: #17301f; --stub: #f0a560; --stub-soft: #33230f;
+      --code-bg: #0c1017; --code-fg: #dce2ec; --quiz-soft: #221f38;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.65 Georgia, "Times New Roman", serif;
+  }
+  code, pre, .mono { font-family: Consolas, "Cascadia Mono", "Courier New", monospace; }
+  header.hero {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 40px 24px 28px; text-align: center;
+  }
+  header.hero h1 { margin: 0 0 8px; font-size: 30px; }
+  header.hero p { margin: 0 auto; max-width: 640px; color: var(--muted); font-size: 15px; }
+  .layout { display: flex; max-width: 1180px; margin: 0 auto; gap: 28px; padding: 28px 24px; }
+  nav.toc {
+    flex: 0 0 250px; position: sticky; top: 16px; align-self: flex-start;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 14px; font-size: 14px; max-height: calc(100vh - 40px); overflow: auto;
+    font-family: "Segoe UI", system-ui, sans-serif;
+  }
+  nav.toc h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  nav.toc a { display: block; color: var(--fg); text-decoration: none; padding: 5px 8px; border-radius: 6px; }
+  nav.toc a:hover { background: var(--accent-soft); color: var(--accent); }
+  main { flex: 1; min-width: 0; }
+  section.topic {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 26px 30px; margin-bottom: 26px;
+  }
+  section.topic h2 { margin: 0 0 4px; font-size: 23px; }
+  .one-line { color: var(--muted); font-style: italic; margin: 0 0 18px; font-size: 15px; }
+  h3 { font-size: 17px; margin: 22px 0 8px; font-family: "Segoe UI", system-ui, sans-serif; }
+  .badge {
+    display: inline-block; font: 500 12px/1.4 "Segoe UI", system-ui, sans-serif;
+    padding: 2px 10px; border-radius: 999px; vertical-align: middle; margin-left: 8px;
+  }
+  .badge.ok { background: var(--ok-soft); color: var(--ok); }
+  .badge.stub { background: var(--stub-soft); color: var(--stub); }
+  pre {
+    background: var(--code-bg); color: var(--code-fg); padding: 14px 16px;
+    border-radius: 10px; overflow-x: auto; font-size: 13px; line-height: 1.5;
+  }
+  code { background: var(--accent-soft); color: var(--fg); padding: 1px 6px; border-radius: 5px; font-size: 0.88em; }
+  pre code { background: none; padding: 0; }
+  .analogy {
+    border-left: 4px solid var(--accent); background: var(--accent-soft);
+    padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 16px 0; font-size: 15px;
+  }
+  .analogy strong { font-family: "Segoe UI", system-ui, sans-serif; }
+  details.deep {
+    border: 1px dashed var(--border); border-radius: 10px; padding: 10px 16px;
+    margin: 14px 0; font-size: 15px;
+  }
+  details.deep summary { cursor: pointer; font-weight: bold; font-family: "Segoe UI", system-ui, sans-serif; font-size: 14px; color: var(--accent); }
+  .quiz {
+    background: var(--quiz-soft); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px; margin: 20px 0 6px;
+  }
+  .quiz p.q { margin: 0 0 10px; font-weight: bold; font-family: "Segoe UI", system-ui, sans-serif; font-size: 15px; }
+  .quiz .opts { display: flex; flex-direction: column; gap: 8px; }
+  .quiz button.opt {
+    text-align: left; font: 14px/1.4 "Segoe UI", system-ui, sans-serif;
+    padding: 9px 14px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--fg); cursor: pointer;
+  }
+  .quiz button.opt:hover { border-color: var(--accent); }
+  .quiz button.opt.correct { border-color: var(--ok); background: var(--ok-soft); }
+  .quiz button.opt.wrong { border-color: var(--stub); background: var(--stub-soft); }
+  .quiz .feedback { margin: 10px 0 0; font-size: 14px; font-family: "Segoe UI", system-ui, sans-serif; min-height: 20px; }
+  .flowdiagram { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 18px 0; font-family: "Segoe UI", system-ui, sans-serif; }
+  .fbox {
+    border: 1.5px solid var(--accent); color: var(--fg); background: var(--accent-soft);
+    border-radius: 8px; padding: 8px 12px; font-size: 13px; text-align: center;
+  }
+  .farrow { color: var(--muted); font-size: 16px; padding: 0 2px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; font-family: "Segoe UI", system-ui, sans-serif; margin: 14px 0; }
+  th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+  th { background: var(--accent-soft); }
+  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 10px 24px 40px; font-family: "Segoe UI", system-ui, sans-serif; }
+  @media (max-width: 900px) {
+    .layout { flex-direction: column; }
+    nav.toc { position: static; flex: none; max-height: none; }
+    section.topic { padding: 20px 18px; }
+  }
+  @media print {
+    nav.toc, .quiz button.opt { cursor: default; }
+    body { background: #fff; color: #000; }
+    section.topic { break-inside: avoid; border: 1px solid #ccc; }
+    pre { white-space: pre-wrap; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <h1>RAG Chatbot — Interactive Topics Guide</h1>
+  <p>A chapter-by-chapter tour of <span class="mono">D:\rag-chatbot</span>: every concept you need,
+  explained in plain words, then shown in the project's real code. Answer the quizzes to check yourself.</p>
+</header>
+
+<div class="layout">
+<nav class="toc" id="toc">
+  <h2>Contents</h2>
+  <a href="#t1">1 · What RAG is and why</a>
+  <a href="#t2">2 · Project architecture</a>
+  <a href="#t3">3 · Ingestion: files → Documents</a>
+  <a href="#t4">4 · Chunking: Documents → Nodes</a>
+  <a href="#t5">5 · Embeddings: text → numbers</a>
+  <a href="#t6">6 · Vector store: ChromaDB</a>
+  <a href="#t7">7 · Retrieval: finding evidence</a>
+  <a href="#t8">8 · Grounded generation</a>
+  <a href="#t9">9 · Streamlit UI &amp; state</a>
+  <a href="#t10">10 · Config &amp; secrets</a>
+  <a href="#t11">11 · Testing approach</a>
+  <a href="#t12">12 · Roadmap: what's left</a>
+</nav>
+
+<main>
+
+<!-- ================= 1 ================= -->
+<section class="topic" id="t1">
+  <h2>1 · What RAG is and why <span class="badge ok">core idea</span></h2>
+  <p class="one-line">RAG = Retrieval-Augmented Generation: look up facts first, then let the LLM answer from what you found.</p>
+
+  <p>A plain LLM (like Gemini) only knows what it memorized during training. Ask it about
+  <em>your</em> company's lease contract and it either says "I don't know" — or worse, invents a confident answer
+  (a <strong>hallucination</strong>).</p>
+  <p><strong>Retrieval-Augmented Generation</strong> fixes this with two steps:</p>
+  <div class="flowdiagram">
+    <div class="fbox">Your documents</div><span class="farrow">→</span>
+    <div class="fbox">Chopped into chunks</div><span class="farrow">→</span>
+    <div class="fbox">Stored as vectors</div><span class="farrow">→</span>
+    <div class="fbox">Question arrives</div><span class="farrow">→</span>
+    <div class="fbox">Find top-3 similar chunks</div><span class="farrow">→</span>
+    <div class="fbox">LLM answers<br>using ONLY those chunks</div>
+  </div>
+
+  <div class="analogy"><strong>Analogy:</strong> an open-book exam. A raw LLM is a student answering from memory.
+  RAG lets the student first <em>find the relevant pages in the book</em> (retrieval), then write the answer
+  copying evidence from those pages (generation). If the pages don't contain the answer, the honest student says so.</div>
+
+  <h3>The three letters</h3>
+  <table>
+    <tr><th>Letter</th><th>Means</th><th>In this project</th></tr>
+    <tr><td><strong>R</strong>etrieval</td><td>Find similar text chunks</td><td><span class="mono">retrieval.py</span> + ChromaDB</td></tr>
+    <tr><td><strong>A</strong>ugmented</td><td>Paste findings into the prompt</td><td>grounded prompt in <span class="mono">retrieval.py</span></td></tr>
+    <tr><td><strong>G</strong>eneration</td><td>LLM writes the final answer</td><td>Gemini via <span class="mono">llm.py</span></td></tr>
+  </table>
+
+  <div class="quiz" data-answer="1">
+    <p class="q">Quick check: what is the main problem RAG solves?</p>
+    <div class="opts">
+      <button class="opt" data-opt="0">It makes the LLM respond faster.</button>
+      <button class="opt" data-opt="1">It grounds answers in your own documents instead of the model's memory.</button>
+      <button class="opt" data-opt="2">It reduces the number of chunks stored.</button>
+      <button class="opt" data-opt="3">It removes the need for an API key.</button>
+    </div>
+    <p class="feedback" role="status"></p>
+  </div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section class="topic" id="t2">
+  <h2>2 · Project architecture: one seam per stage <span class="badge ok">implemented</span></h2>
+  <p class="one-line">Each file does exactly one job; only pipeline.py knows the whole order.</p>
+
+  <p>Think like a Java developer: this repo is <em>interfaces everywhere, implementations later</em>.
+  Every stage depends only on <span class="mono">config.Settings</span> and LlamaIndex types — never on another stage.
+  That means you can test or replace any module in isolation (like swapping one class behind a Java interface).</p>
+
+  <pre><code>rag_chatbot/
+├── ingestion.py     files → Documents            ✅ implemented
+├── chunking.py      Documents → TextNodes        ✅ implemented
+├── embeddings.py    build local embed model      ✅ implemented
+├── vector_store.py  persist chunks (ChromaDB)    ⬜ stub
+├── llm.py           build Gemini chat model       ⬜ stub
+├── retrieval.py     find chunks → cited Answer    ⬜ stub
+├── chatbot.py       conversation state            ⬜ stub
+└── pipeline.py      wires everything together     ⬜ stub</code></pre>
+
+  <p>From <span class="mono">pipeline.py</span>'s own docstring:</p>
+  <pre><code>"""Pipeline orchestration: wire the stages together in dependency order.
+
+The only module that knows the whole flow. UI code and tests call these functions
+rather than sequencing ingestion, chunking, embeddings, and storage themselves —
+which is what keeps `app` free of pipeline logic."""</code></pre>
+
+  <div class="analogy"><strong>Analogy:</strong> a restaurant kitchen. Each cook (module) handles one station —
+  chopping, grilling, plating. The head chef (<span class="mono">pipeline.py</span>) alone decides the order of steps.
+  The waiter (<span class="mono">app.py</span>) only talks to the head chef, never to the cooks.</div>
+
+  <details class="deep">
+    <summary>Why does this matter? (the "seam" idea)</summary>
+    <p>A <strong>seam</strong> is a place where you can change behavior without changing the caller.
+    <span class="mono">llm.py</span> is described as the "single seam between the rest of the codebase and the Google
+    provider SDK" — if you ever swap Gemini for another model, only that one file changes.
+    This is the same reasoning as depending on a Java interface instead of a concrete SDK class.</p>
+  </details>
+
+  <div class="quiz" data-answer="2">
+    <p class="q">Quick check: if you wanted to replace ChromaDB with another vector database, how many modules should need changes in a clean design?</p>
+    <div class="opts">
+      <button class="opt" data-opt="0">All of them, because every stage touches the database.</button>
+      <button class="opt" data-opt="1">Two: retrieval.py and app.py.</button>
+      <button class="opt" data-opt="2">Ideally one: vector_store.py, the stage that owns storage.</button>
+    </div>
+    <p class="feedback" role="status"></p>
+  </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section class="topic" id="t3">
+  <h2>3 · Ingestion: files → Documents <span class="badge ok">implemented</span></h2>
+  <p class="one-line">Find the supported files, read each format, clean the text — without ever changing a word.</p>
+
+  <h3>What counts as a document?</h3>
+  <pre><code>SUPPORTED_EXTENSIONS: Final[tuple[str, ...]] = (".pdf", ".docx", ".txt", ".md")</code></pre>
+  <p><span class="mono">discover_files()</span> scans <span class="mono">data/</span> recursively (subfolders included).
+  Unknown types raise <span class="mono">UnsupportedFileError</span>; an absent folder raises <span class="mono">FileNotFoundError</span>.</p>
+
+  <h3>Per-format readers</h3>
+  <table>
+    <tr><th>Format</th><th>Reader</th><th>Result</th></tr>
+    <tr><td>.pdf</td><td>LlamaIndex <span class="mono">PDFReader</span> (uses pypdf)</td><td><strong>one Document per page</strong> → pages keep <span class="mono">page_number</span></td></tr>
+    <tr><td>.docx</td><td><span class="mono">DocxReader</span> (uses docx2txt)</td><td>whole body as one Document (no page info — docx2txt discards pagination)</td></tr>
+    <tr><td>.txt / .md</td><td>direct read</td><td>UTF-8, falling back to latin-1</td></tr>
+  </table>
+
+  <h3>Cleaning that never rewrites content</h3>
+  <p><span class="mono">clean_text()</span> fixes <em>layout noise</em> from extraction but never touches wording:
+  <span class="mono">\r\n</span> → <span class="mono">\n</span>, non-breaking spaces → normal spaces, zero-width characters removed,
+  space/tab runs collapsed, 3+ blank lines → one paragraph break.</p>
+  <pre><code># rag_chatbot/ingestion.py — the ordered rules
+1. "\r\n" and "\r" become "\n".
+2. Non-breaking spaces become ordinary spaces; zero-width characters vanish.
+3. Runs of tabs and spaces inside a line collapse to one space.
+4. Trailing whitespace is stripped from every line.
+5. Three or more consecutive newlines collapse to a single blank line...
+6. Leading and trailing whitespace is trimmed from the result.</code></pre>
+
+  <h3>Bad files don't sink the ship</h3>
+  <ul>
+    <li>Empty-after-cleaning file → contributes <strong>zero documents</strong>, no error.</li>
+    <li>Damaged file → <span class="mono">CorruptDocumentError</span>; unreadable PDFs can be <em>skipped</em> with
+        <span class="mono">load_documents(..., continue_on_error=True)</span> so one bad file cannot discard a whole knowledge base.</li>
+  </ul>
+
+  <div class="analogy"><strong>Analogy:</strong> ingestion is the librarian who takes your messy printouts,
+  photocopies each page, straightens the stapled corners — but never edits a single word, because the words are evidence.</div>
+
+  <div class="quiz" data-answer="1">
+    <p class="q">Quick check: why does <code class="mono">clean_text</code> refuse to fix spelling, casing, or punctuation?</p>
+    <div class="opts">
+      <button class="opt" data-opt="0">Because regex for spelling is too slow.</button>
+      <button class="opt" data-opt="1">Because retrieved chunks are quoted back to the user as evidence — wording must stay verbatim.</button>
+      <button class="opt" data-opt="2">Because Python cannot change string casing.</button>
+    </div>
+    <p class="feedback" role="status"></p>
+  </div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section class="topic" id="t4">
+  <h2>4 · Chunking: Documents → TextNodes <span class="badge ok">implemented</span></h2>
+  <p class="one-line">Cut documents into ~512-token pieces along sentence boundaries, with 50 tokens of overlap.</p>
+
+  <h3>Why chunk at all?</h3>
+  <p>Two reasons: (1) a whole 300-page PDF doesn't fit a prompt and dilutes similarity search;
+  (2) retrieval works best when the stored unit is roughly the size of a useful answer — a paragraph, not a book.</p>
+
+  <h3>The real code</h3>
+  <pre><code># rag_chatbot/chunking.py
+return SentenceSplitter(
+    chunk_size=chunk_size,        # default 512 tokens
+    chunk_overlap=chunk_overlap,  # default 50 tokens
+    include_metadata=True,
+)</code></pre>
+
+  <h3>Reading the geometry</h3>
+  <div class="flowdiagram">
+    <div class="fbox">chunk 1: tokens 0–511</div><span class="farrow">⟲</span>
+    <div class="fbox">chunk 2: tokens 462–973<br>(last 50 shared with chunk 1)</div>
+  </div>
+  <p>SentenceSplitter <strong>packs whole sentences</strong> up to the budget, so cuts land between sentences — never
+  mid-word. Only a single oversized sentence is split between words. The <span class="mono">overlap</span> means a fact
+  sitting right at a boundary appears complete in at least one chunk.</p>
+
+  <h3>Metadata survives the cut</h3>
+  <p>Every <span class="mono">TextNode</span> copies its source document's metadata: <span class="mono">file_name</span>,
+  <span class="mono">file_path</span>, <span class="mono">file_type</span>, <span class="mono">file_size_bytes</span>,
+  <span class="mono">last_modified</span>, plus <span class="mono">page_number / page_count / page_label</span> for PDFs.
+  This is why a chunk retrieved three stages later can still cite "lease.pdf, page 4".</p>
+
+  <div class="analogy"><strong>Analogy:</strong> cutting a novel into index cards for a search engine.
+  Cards that end mid-sentence are useless — so you cut between sentences, and repeat the last two sentences on the next
+  card so no thought gets lost at a seam.</div>
+
+  <details class="deep">
+    <summary>What is a "token"? (Java devs: not a character)</summary>
+    <p>A token is a piece of word as the model's tokenizer sees it — roughly ¾ of a word for English.
+    512 tokens ≈ 380 words ≈ one solid paragraph. <span class="mono">chunk_overlap ≥ chunk_size</span> is rejected by
+    <span class="mono">_validate_geometry()</span> because every chunk would then be pure repetition with no new text.</p>
+  </details>
+
+  <div class="quiz" data-answer="2">
+    <p class="q">Quick check: with chunk_size=512 and chunk_overlap=50, what do adjacent chunks share?</p>
+    <div class="opts">
+      <button class="opt" data-opt="0">The first sentence of the second chunk.</button>
+      <button class="opt" data-opt="1">Nothing — overlap only applies within one chunk.</button>
+      <button class="opt" data-opt="2">The last ~50 tokens of the earlier chunk, repeated at the start of the next.</button>
+    </div>
+    <p class="feedback" role="status"></p>
+  </div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section class="topic" id="t5">
+  <h2>5 · Embeddings: turning meaning into numbers <span class="badge ok">implemented</span></h2>
+  <p class="one-line">A local model maps every chunk to 384 numbers; similar meaning ⇒ nearby numbers.</p>
+
+  <p>An <strong>embedding model</strong> is a neural network that takes text and outputs a fixed-length list of
+  numbers (a <em>vector</em>). The magic: the numbers encode <em>meaning</em>, so</p>
+  <ul>
+    <li>"The lease expires in June" and "Rental agreement ends June" → <strong>very close vectors</strong>,</li>
+    <li>and either of those vs "Bananas are yellow" → far apart.</li>
+  </ul>
+  <p>Now "find text related to the question" is just arithmetic: compare vectors.</p>
+
+  <h3>The real code</h3>
+  <pre><code># rag_chatbot/embeddings.py
+return HuggingFaceEmbedding(model_name=settings.embedding_model)
+# default: "sentence-transformers/all-MiniLM-L6-v2" → 384-dim vectors, runs on YOUR machine</code></pre>
+
+  <h3>How similarity is measured: cosine</h3>
+  <p>Cosine similarity compares the <em>angle</em> between two vectors, ignoring their length:
+  <span class="mono">1.0</span> = same direction (near-identical meaning), <span class="mono">0</span> = unrelated,
+  <span class="mono">-1</span> = opposite. That score is exactly what shows up under "Sources" in the UI.</p>
+
+  <h3>Why local embeddings matter</h3>
+  <ul>
+    <li><strong>Privacy:</strong> your document text never leaves the machine for embedding — only the
+        small retrieved context is sent to Gemini at question time.</li>
+    <li><strong>Cost:</strong> no per-call embedding API fees.</li>
+    <li><strong>One-time download:</strong> first run fetches model weights to <span class="mono">~/.cache/huggingface</span>; after that, offline.</li>
+    <li><strong>Build once:</strong> loading the model is slow, so <span class="mono">app.py</span> caches it via
+        <span class="mono">st.cache_resource</span>. If the model fails to load, you get
+        <span class="mono">EmbeddingModelError</span> with the original cause chained (<span class="mono">raise ... from exc</span> — Python's version of exception chaining, like Java's <span class="mono">cause</span>).</li>
+  </ul>
+
+  <div class="analogy"><strong>Analogy:</strong> a map of meaning. Every sentence gets GPS coordinates in 384-dimensional
+  space. "Find related text" becomes "find the nearest coordinates" — a distance lookup, not a keyword match. This is also
+  why searching "car" finds a paragraph that only says "automobile": on the map, they live next door.</div>
+
+  <div class="quiz" data-answer="0">
+    <p class="q">Quick check: why must the ChromaDB collection be created with exactly 384 dimensions?</p>
+    <div class="opts">
+      <button class="opt" data-opt="0">Because every vector in a collection must have the same length as the embed model's output, or cosine math is meaningless.</button>
+      <button class="opt" data-opt="1">Because 384 is ChromaDB's hardcoded default.</button>
+      <button class="opt" data-opt="2">Because the Gemini model requires it.</button>
+    </div>
+    <p class="feedback" role="status"></p>
+  </div>
+</section>
+
+<!-- ================= 6 ================= -->
+<section class="topic" id="t6">
+  <h2>6 · Vector store: ChromaDB <span class="badge stub">stubbed — next to implement</span></h2>
+  <p class="one-line">A database whose rows are (text + vector), built for "give me the K nearest vectors".</p>
+
+  <p>A normal relational DB answers "WHERE name = 'x'". A <strong>vector store</strong> answers
+  "which 3 stored vectors are closest to <em>this</em> vector?" — a query equality checks can't express.
+  ChromaDB is a lightweight one that <strong>persists on disk</strong> (here, in <span class="mono">vectorstore/</span>),
+  so the index survives restarts — ingest once, ask many times.</p>
+
+  <h3>What the stub promises</h3>
+  <pre><code># rag_chatbot/vector_store.py — intended implementation (docstring)
+create a chromadb.PersistentClient rooted at settings.chroma_dir,
+get or create the settings.chroma_collection collection,
+wrap it in llama_index.vector_stores.chroma.ChromaVectorStore.</code></pre>
+
+  <h3>Key vocabulary</h3>
+  <table>
+    <tr><th>Term</th><th>Meaning here</th></tr>
+    <tr><td>collection</td><td>one named table of chunks — <span class="mono">rag_documents</span> (like a DB table, or a Lucene <span class="mono">Index</span> object)</td></tr>
+    <tr><td>persist dir</td><td><span class="mono">vectorstore/</span> on disk; gitignored, rebuilt by ingesting</td></tr>
+    <tr><td>index_exists()</td><td>tells the UI whether chat is possible yet ("No index yet" banner)</td></tr>
+    <tr><td>reset_index()</td><td>delete the collection — the "Clear index" button</td></tr>
+  </table>
+
+  <div class="analogy"><strong>Analogy (Java land):</strong> ChromaDB plays the role Apache Lucene plays for
+  full-text search — an inverted/ANN index you can open from a directory. LlamaIndex's
+  <span class="mono">VectorStoreIndex</span> is the Hibernate-like wrapper: your code talks to the abstraction,
+  not to the driver.</div>
+
+  <div class="quiz" data-answer="2">
+    <p class="q">Quick check: what does "persistent" mean for the Chroma client here?</p>
+    <div class="opts">
+      <button class="opt" data-opt="0">The index is stored in Google's cloud.</button>
+      <button class="opt" data-opt="1">The index is rebuilt from data/ every time you ask a question.</button>
+      <button class="opt" data-opt="2">The index keeps its vectors + text on disk between runs, so you don't re-embed every restart.</button>
+      <button class="opt" data-opt="3">The index only exists while the Streamlit process is running.</button>
+    </div>
+    <p class="feedback" role="status"></p>
+  </div>
+</section>
+
+<!-- ================= 7 ================= -->
+<section class="topic" id="t7">
+  <h2>7 · Retrieval: finding the evidence <span class="badge stub">stubbed</span></h2>
+  <p class="one-line">Embed the question, ask Chroma for the top-3 nearest chunks, keep their scores.</p>
+
+  <h3>The shapes already designed</h3>
+  <p>Even though the logic is stubbed, the <em>value objects</em> exist — read them like Java records:</p>
+  <pre><code>@dataclass(frozen=True, slots=True)
+class Source:              # one cited chunk
+    document_name: str     # which file
+    score: float | None    # cosine similarity
+    text: str              # the chunk, verbatim
+
+@dataclass(frozen=True, slots=True)
+class Answer:              # reply + its evidence
+    text: str
+    sources: tuple[Source, ...]</code></pre>
+
+  <h3>Top-K</h3>
+  <p><span class="mono">build_retriever(index, top_k=settings.similarity_top_k)</span> — default K=3. Design trade-off you
+  should understand:</p>
+  <ul>
+    <li>K too small → the true answer's paragraph never reaches the prompt → "not in context".</li>
+    <li>K too large → prompt bloats, costs rise, and irrelevant chunks invite the model to drift.</li>
+  </ul>
+
+  <div class="analogy"><strong>Analogy:</strong> the reference desk at a library. You hand over your question;
+  the librarian returns the 3 most relevant index cards with a relevance stamp on each. The retrieval module is
+  forbidden from <em>writing</em> anything (the docstring says so) — it only hands cards to the writer.</div>
+
+  <div class="quiz" data-answer="1">
+    <p class="q">Quick check: what is retrieved to compare against the chunks?</p>
+    <div class="opts">
+      <button class="opt" data-opt="0">The keywords of the question, matched exactly against chunk text.</button>
+      <button class="opt" data-opt="1">The question's embedding vector, compared by cosine similarity to stored chunk vectors.</button>
+      <button class="opt" data-opt="2">A fresh Gemini summary of the question.</button>
+    </div>
+    <p class="feedback" role="status"></p>
+  </div>
+</section>
+
+<!-- ================= 8 ================= -->
+<section class="topic" id="t8">
+  <h2>8 · Grounded generation &amp; citations <span class="badge stub">stubbed</span></h2>
+  <p class="one-line">The prompt forces the model to answer only from retrieved context — and name the file it came from.</p>
+
+  <h3>The system prompt (already written in chatbot.py)</h3>
+  <pre><code>DEFAULT_SYSTEM_PROMPT = (
+    "You are a document question-answering assistant. Answer only from the "
+    "provided context. If the context does not contain the answer, say so "
+    "plainly instead of guessing, and cite the source document."
+)</code></pre>
+  <p>Three rules packed in there, each fighting a specific LLM failure:</p>
+  <ol>
+    <li><strong>"only from the provided context"</strong> — blocks using training memory (the hallucination source).</li>
+    <li><strong>"say so plainly instead of guessing"</strong> — makes "I don't know" a valid, non-punished answer.</li>
+    <li><strong>"cite the source document"</strong> — makes every claim checkable against a chunk.</li>
+  </ol>
+
+  <h3>The generator</h3>
+  <pre><code># rag_chatbot/llm.py — intended (stubbed) implementation
+GoogleGenAI(settings.gemini_api_key, model="gemini-2.5-flash", temperature=low)</code></pre>
+  <p>A <strong>low temperature</strong> is chosen deliberately: temperature controls randomness. Grounded Q&amp;A wants
+  factual, repeatable output, not creativity.</p>
+
+  <div class="analogy"><strong>Analogy:</strong> a lawyer's brief. The retrieved chunks are exhibits; the system prompt
+  is the judge instructing "argue only from exhibits on record, cite exhibit numbers, or say you have no evidence."</div>
+
+  <div class="quiz" data-answer="2">
+    <p class="q">Quick check: why low temperature for this task?</p>
+    <div class="opts">
+      <button class="opt" data-opt="0">It reduces API cost per token.</button>
+      <button class="opt" data-opt="1">High temperatures are unsupported by Gemini Flash.</button>
+      <button class="opt" data-opt="2">Grounded Q&amp;A needs deterministic, factual wording — not creative variation.</button>
+    </div>
+    <p class="feedback" role="status"></p>
+  </div>
+</section>
+
+<!-- ================= 9 ================= -->
+<section class="topic" id="t9">
+  <h2>9 · Streamlit: the UI and its strange state model <span class="badge ok">implemented</span></h2>
+  <p class="one-line">The whole script re-runs on every interaction — so state lives in session_state and heavy objects in cache_resource.</p>
+
+  <p>Unlike Spring/JavaFX where the app is a running process with event handlers, a Streamlit script
+  <strong>executes top-to-bottom again on every click or keystroke</strong>. Two tools tame that:</p>
+
+  <h3>st.session_state — the per-browser-tab dictionary</h3>
+  <pre><code># app.py — chat history survives reruns
+st.session_state.messages.append(
+    {"role": "assistant", "content": answer.text, "sources": answer.sources}
+)</code></pre>
+
+  <h3>@st.cache_resource — don't reload the model 50 times</h3>
+  <pre><code>@st.cache_resource(show_spinner="Loading configuration...")
+def get_settings() -> Settings:
+    return load_settings()</code></pre>
+  <p>The function runs once per process; later reruns reuse the cached object. Ingesting rebuilds the index,
+  so the app then calls <span class="mono">st.cache_resource.clear()</span> — a deliberate cache bust.</p>
+
+  <h3>Graceful degradation</h3>
+  <p>Because pipeline stages raise <span class="mono">NotImplementedError</span>, the UI catches it and shows
+  "The RAG pipeline is scaffolded but not implemented yet" instead of a stack trace. Presentation logic is all that's real
+  in <span class="mono">app.py</span> — no pipeline call, no prompt text, no key handling lives there.</p>
+
+  <div class="quiz" data-answer="0">
+    <p class="q">Quick check: why does app.py call st.cache_resource.clear() after a successful ingest?</p>
+    <div class="opts">
+      <button class="opt" data-opt="0">Cached objects (settings, index handles) may describe the OLD index; clearing forces them to be rebuilt.</button>
+      <button class="opt" data-opt="1">To delete the ChromaDB files on disk.</button>
+      <button class="opt" data-opt="2">Streamlit requires it before every chat message.</button>
+    </div>
+    <p class="feedback" role="status"></p>
+  </div>
+</section>
+
+<!-- ================= 10 ================= -->
+<section class="topic" id="t10">
+  <h2>10 · Config &amp; secrets: one door, read once <span class="badge ok">implemented</span></h2>
+  <p class="one-line">.env → load_settings() → an immutable Settings object; the key never travels further.</p>
+
+  <pre><code># config.py — a frozen dataclass is Python's nearest cousin to an immutable Java record
+@dataclass(frozen=True, slots=True)
+class Settings:
+    gemini_api_key: str      # required
+    gemini_model: str = "gemini-2.5-flash"
+    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    chunk_size: int = 512
+    chunk_overlap: int = 50
+    similarity_top_k: int = 3
+    ...</code></pre>
+
+  <h3>The rules this file enforces</h3>
+  <ul>
+    <li><strong>Validate at the boundary.</strong> Missing <span class="mono">GEMINI_API_KEY</span> →
+        <span class="mono">ConfigError</span> at start-up, not a cryptic 401 three stages later.
+        <span class="mono">CHUNK_OVERLAP ≥ CHUNK_SIZE</span> is also rejected here.</li>
+    <li><strong>Secrets go one way.</strong> <span class="mono">.env</span> is gitignored; the key is read once and only
+        <span class="mono">llm.py</span> ever uses it. UI and storage modules physically cannot see it.</li>
+    <li><strong>Even <code class="mono">repr</code> hides it.</strong> Printing Settings shows
+        <span class="mono">gemini_api_key='***'</span> — so a stray debug print can't leak the key into a log or screenshot.</li>
+    <li><strong>Gated HF models:</strong> <span class="mono">HuggingFaceEmbedding</span> has no token argument —
+        <span class="mono">huggingface_hub</span> reads <span class="mono">HF_TOKEN</span> from the environment that
+        <span class="mono">load_settings</span> already populated. No plumbing, no passing secrets as parameters.</li>
+  </ul>
+
+  <div class="analogy"><strong>Analogy:</strong> hotel keycards. The front desk (<span class="mono">config.py</span>)
+  creates and encodes them once; guests (modules) use them at their own door; nobody writes the master code on paper.</div>
+
+  <div class="quiz" data-answer="1">
+    <p class="q">Quick check: why mask the API key in <code class="mono">Settings.__repr__</code>?</p>
+    <div class="opts">
+      <button class="opt" data-opt="0">So the app runs faster.</button>
+      <button class="opt" data-opt="1">Because objects get printed accidentally (logs, debug, screenshots) — the last line of defense is making the secret unprintable.</button>
+      <button class="opt" data-opt="2">Because the Gemini SDK requires a masked string.</button>
+    </div>
+    <p class="feedback" role="status"></p>
+  </div>
+</section>
+
+<!-- ================= 11 ================= -->
+<section class="topic" id="t11">
+  <h2>11 · How this project is tested <span class="badge ok">86 offline tests</span></h2>
+  <p class="one-line">Real files instead of mocks; live API calls quarantined from the suite.</p>
+
+  <ul>
+    <li><strong>Real fixtures, no fake I/O:</strong> <span class="mono">tests/conftest.py</span> generates actual
+        PDF and DOCX files, so <span class="mono">pypdf</span>, <span class="mono">docx2txt</span> and the LlamaIndex readers
+        are genuinely exercised. (Python's <span class="mono">pytest</span> ≈ JUnit; a <span class="mono">fixture</span> ≈
+        a <span class="mono">@BeforeEach</span> factory method.)</li>
+    <li><strong>Tested properties, not pixels:</strong> chunking tests check geometry, token budgets, overlap, metadata;
+        embedding tests check vector shape, determinism, and semantic ranking ("cat" sentence closer to "kitten" than to
+        "invoice").</li>
+    <li><strong>The live API is excluded on purpose:</strong> <span class="mono">tests/test_geminiapi.py</span> is a
+        stand-alone connectivity script. pytest never imports it, because its body spends a real (billable) Gemini request
+        at import time. Run it manually: <span class="mono">python tests\test_geminiapi.py</span>.</li>
+    <li><strong>Offline by design:</strong> the whole 86-test suite runs in ~35s without network (after the one-time model download).</li>
+  </ul>
+
+  <div class="analogy"><strong>Analogy:</strong> testing a toaster by toasting real bread, not by mocking "bread-like
+  objects". But the electricity bill (the paid API) is only tested when you flip that switch yourself.</div>
+
+  <div class="quiz" data-answer="2">
+    <p class="q">Quick check: why are PDF/DOCX fixtures built as real files instead of mocks?</p>
+    <div class="opts">
+      <button class="opt" data-opt="0">Mocks are illegal in pytest.</button>
+      <button class="opt" data-opt="1">Because the readers need a server.</button>
+      <button class="opt" data-opt="2">Because a mock reader can't catch real parsing bugs — testing the actual file→text path exercises the true dependencies.</button>
+    </div>
+    <p class="feedback" role="status"></p>
+  </div>
+</section>
+
+<!-- ================= 12 ================= -->
+<section class="topic" id="t12">
+  <h2>12 · Roadmap: what's left to implement <span class="badge stub">4 stubs remain</span></h2>
+  <p class="one-line">Build bottom-up: storage → generation → retrieval → wiring → chat.</p>
+
+  <p>From the README, in order — now you know what each line actually means:</p>
+  <ol>
+    <li><span class="mono">vector_store.py</span> — persistent Chroma client + <span class="mono">VectorStoreIndex</span>
+        (match 384 dims; implement <span class="mono">index_exists</span>, <span class="mono">reset_index</span>).</li>
+    <li><span class="mono">llm.py</span> — return a <span class="mono">GoogleGenAI</span> model from config; low temperature.</li>
+    <li><span class="mono">retrieval.py</span> — retriever (top-K=3) + grounded prompt → real
+        <span class="mono">Answer</span>/<span class="mono">Source</span> objects.</li>
+    <li><span class="mono">chatbot.py</span> + <span class="mono">pipeline.py</span> — history-aware
+        <span class="mono">Chatbot.ask()</span>, then wire the whole order in the two pipeline functions.
+        The UI already handles everything they will return.</li>
+  </ol>
+
+  <p><strong>The mental model to keep:</strong> the document pipeline (ch. 3–6) is a <em>write path</em> you run once per
+  change set; the question pipeline (ch. 5, 7–8) is a <em>read path</em> run per message, reusing the same embed model so
+  questions and chunks live in one comparable vector space. Everything else — Streamlit, config, tests — exists to keep
+  those two paths honest, safe, and verifiable.</p>
+
+  <div class="quiz" data-answer="0">
+    <p class="q">Final check: why must ingestion and retrieval use the <em>same</em> embedding model?</p>
+    <div class="opts">
+      <button class="opt" data-opt="0">Vectors from different models live in different spaces — distances across them are meaningless.</button>
+      <button class="opt" data-opt="1">To save disk space.</button>
+      <button class="opt" data-opt="2">ChromaDB rejects mixed models at write time.</button>
+    </div>
+    <p class="feedback" role="status"></p>
+  </div>
+</section>
+
+</main>
+</div>
+
+<footer>Generated from the actual code in D:\rag-chatbot · badges reflect real repo state (Nov 2026) · print this page to PDF any time with Ctrl+P</footer>
+
+<script>
+(function () {
+  var feedbackText = {
+    correct: ['✔ Correct.', '✔ Right — you got it.', '✔ Yes, exactly.'],
+    wrong: '✘ Not quite — reread the section above, then try again.'
+  };
+
+  document.querySelectorAll('.quiz').forEach(function (quiz) {
+    var answer = quiz.getAttribute('data-answer');
+    var feedbackEl = quiz.querySelector('.feedback');
+    quiz.querySelectorAll('.opt').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        quiz.querySelectorAll('.opt').forEach(function (b) {
+          b.classList.remove('correct', 'wrong');
+        });
+        if (btn.getAttribute('data-opt') === answer) {
+          btn.classList.add('correct');
+          var pool = feedbackText.correct;
+          feedbackEl.textContent = pool[Math.floor(Math.random() * pool.length)];
+          feedbackEl.style.color = 'var(--ok)';
+        } else {
+          btn.classList.add('wrong');
+          feedbackEl.textContent = feedbackText.wrong;
+          feedbackEl.style.color = 'var(--stub)';
+        }
+      });
+    });
+  });
+
+  // Expand all <details> before printing so the PDF snapshot has no hidden text.
+  window.addEventListener('beforeprint', function () {
+    document.querySelectorAll('details.deep').forEach(function (d) { d.open = true; });
+  });
+})();
+</script>
+</body>
+</html>
